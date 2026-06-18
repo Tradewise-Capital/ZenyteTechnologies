@@ -631,7 +631,7 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
 
       <section className="section">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <SectionHead eyebrow="Full Results" title="Strategy metrics" sub="Core report statistics moved from the static MT5 report into reusable React sections." />
+          <SectionHead eyebrow="Full Results" title="Strategy metrics" sub="Core report statistics from the MT5 Strategy Tester backtest." />
           <div className="mt-9 grid gap-4 lg:grid-cols-4">
             {report.groups.map(([title, rows]) => (
               <Card key={title} className="rounded-lg border-border bg-card">
@@ -669,7 +669,7 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
           <SectionHead
             eyebrow="Detailed Analysis"
             title="Trade distribution charts"
-            sub="Hour, weekday, and month activity plus MFE/MAE and holding-time profiles from the static MT5 report images."
+            sub="Hour, weekday, and month activity plus MFE/MAE and holding-time profiles."
           />
           <div className="mt-9 grid gap-4">
             {report.otherCharts
