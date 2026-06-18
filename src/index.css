@@ -1,0 +1,64 @@
+@import "../styles/globals.css";
+
+@layer base {
+  :root {
+    font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background:
+      linear-gradient(180deg, color-mix(in oklch, var(--background), #101010 8%), var(--background) 44rem),
+      var(--background);
+    color: var(--foreground);
+    font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .section {
+    @apply border-b border-border py-20 sm:py-24;
+  }
+
+  .eyebrow {
+    @apply mb-4 text-xs font-medium uppercase tracking-[0.18em] text-[#d7b36e];
+  }
+
+  .section-title {
+    @apply text-4xl font-light leading-tight tracking-normal text-foreground sm:text-5xl;
+  }
+
+  .nav-menu-item {
+    @apply block w-full border-b border-border px-4 py-3 text-left text-sm text-muted-foreground transition last:border-b-0 hover:bg-secondary hover:text-foreground;
+  }
+
+  .mobile-link {
+    @apply rounded-md px-3 py-3 text-left text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground;
+  }
+
+  .market-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(to right, color-mix(in oklch, var(--border), transparent 35%) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--border), transparent 35%) 1px, transparent 1px),
+      radial-gradient(circle at 74% 18%, rgba(215, 179, 110, 0.14), transparent 25rem),
+      linear-gradient(135deg, rgba(117, 201, 154, 0.09), transparent 28rem);
+    background-size: 64px 64px, 64px 64px, auto, auto;
+    mask-image: linear-gradient(to bottom, black, transparent 92%);
+  }
+}
