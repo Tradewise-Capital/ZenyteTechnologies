@@ -30,6 +30,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  AnimatePresence,
+  Collapse,
+  FadeIn,
+  FadeInOnMount,
+  motion,
+  PageTransition,
+  PresenceFade,
+  Stagger,
+  StaggerItem,
+} from "@/components/motion";
+import { easeOut } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { View } from "@/types";
 import "./index.css";
@@ -41,7 +54,7 @@ const heroStats = [
   ["2,148%", "23-Year Total Return", gold],
   ["19.0%", "Annual Return (2020-26)", green],
   ["69.3%", "Win Rate", green],
-  ["2.26", "Sharpe Ratio", "text-zinc-100"],
+  ["2.26", "Sharpe Ratio", "text-foreground"],
 ];
 
 const shortMetrics = [
@@ -50,9 +63,9 @@ const shortMetrics = [
   ["2.26", "Sharpe Ratio", gold],
   ["9.47", "Recovery Factor", gold],
   ["68.4%", "Win Rate", green],
-  ["5.98%", "Max Drawdown", "text-zinc-100"],
-  ["1.46", "Profit Factor", "text-zinc-100"],
-  ["6,636", "Total Trades", "text-zinc-100"],
+  ["5.98%", "Max Drawdown", "text-foreground"],
+  ["1.46", "Profit Factor", "text-foreground"],
+  ["6,636", "Total Trades", "text-foreground"],
 ];
 
 const periodPanels = {
@@ -64,7 +77,7 @@ const periodPanels = {
       ["19.0%", "CAGR", green],
       ["2.26", "Sharpe Ratio", gold],
       ["68.4%", "Win Rate", green],
-      ["5.98%", "Max Drawdown", "text-zinc-100"],
+      ["5.98%", "Max Drawdown", "text-foreground"],
       ["9.47", "Recovery Factor", gold],
     ],
   },
@@ -76,7 +89,7 @@ const periodPanels = {
       ["~14.2%", "Est. CAGR", green],
       ["1.01", "Sharpe Ratio", gold],
       ["69.3%", "Win Rate", green],
-      ["27.34%", "Max Drawdown", "text-zinc-100"],
+      ["27.34%", "Max Drawdown", "text-foreground"],
       ["9.61", "Recovery Factor", gold],
     ],
   },
@@ -244,17 +257,23 @@ export function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav view={view} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goTo={goTo} />
-      {view === "overview" ? (
-        <Overview
-          activePeriod={activePeriod}
-          setActivePeriod={setActivePeriod}
-          sent={sent}
-          setSent={setSent}
-          goTo={goTo}
-        />
-      ) : (
-        <ReportView report={reportData[view]} kind={view} goTo={goTo} />
-      )}
+      <AnimatePresence mode="wait">
+        {view === "overview" ? (
+          <PageTransition key="overview">
+            <Overview
+              activePeriod={activePeriod}
+              setActivePeriod={setActivePeriod}
+              sent={sent}
+              setSent={setSent}
+              goTo={goTo}
+            />
+          </PageTransition>
+        ) : (
+          <PageTransition key={view}>
+            <ReportView report={reportData[view]} kind={view} goTo={goTo} />
+          </PageTransition>
+        )}
+      </AnimatePresence>
       <Footer goTo={goTo} />
     </div>
   );
@@ -272,7 +291,12 @@ function Nav({
   goTo: (view: View, hash?: string) => void;
 }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/88 backdrop-blur-xl">
+    <motion.header
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...easeOut, duration: 0.7 }}
+      className="sticky top-0 z-50 border-b border-border/70 bg-background/88 backdrop-blur-xl"
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
         <button className="group text-left" onClick={() => goTo("overview")} aria-label="Zenyte Technologies home">
           <span className="block text-sm font-semibold tracking-[0.18em] text-foreground">ZENYTE</span>
@@ -283,42 +307,53 @@ function Nav({
           <button className={navClass(view === "overview")} onClick={() => goTo("overview", "#typem")}>
             Type-M
           </button>
-          <div className="group relative">
+            <div className="group relative">
             <button className={cn(navClass(view !== "overview"), "gap-1")}>
               Performance <ChevronDown className="size-3" />
             </button>
             <div className="invisible absolute left-1/2 top-full w-64 -translate-x-1/2 pt-3 opacity-0 transition group-hover:visible group-hover:opacity-100">
-              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-2xl">
+              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-2xl transition-transform duration-200 group-hover:translate-y-0 translate-y-1">
                 <button className="nav-menu-item" onClick={() => goTo("report2020")}>2020-2026 Report</button>
                 <button className="nav-menu-item" onClick={() => goTo("reportLong")}>2003-2026 + Benchmarks</button>
               </div>
             </div>
           </div>
           <button className={navClass(false)} onClick={() => goTo("overview", "#about")}>About</button>
+          <ThemeToggle />
           <Button className="ml-2 bg-[#d7b36e] text-zinc-950 hover:bg-[#e6c47f]" onClick={() => goTo("overview", "#contact")}>
             Request Access
           </Button>
         </nav>
 
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </Button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
+            {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </Button>
+        </div>
       </div>
 
-      {menuOpen && (
-        <div className="border-t border-border bg-card px-5 py-4 md:hidden">
-          <div className="flex flex-col gap-2">
-            <button className="mobile-link" onClick={() => goTo("overview", "#typem")}>Type-M</button>
-            <button className="mobile-link" onClick={() => goTo("report2020")}>2020-2026 Report</button>
-            <button className="mobile-link" onClick={() => goTo("reportLong")}>2003-2026 + Benchmarks</button>
-            <button className="mobile-link" onClick={() => goTo("overview", "#about")}>About</button>
-            <Button className="mt-2 bg-[#d7b36e] text-zinc-950 hover:bg-[#e6c47f]" onClick={() => goTo("overview", "#contact")}>
-              Request Access
-            </Button>
-          </div>
+      <Collapse open={menuOpen} className="overflow-hidden border-t border-border bg-card md:hidden">
+        <div className="px-5 py-4">
+          <Stagger onMount className="flex flex-col gap-2">
+            <StaggerItem><button className="mobile-link w-full" onClick={() => goTo("overview", "#typem")}>Type-M</button></StaggerItem>
+            <StaggerItem><button className="mobile-link w-full" onClick={() => goTo("report2020")}>2020-2026 Report</button></StaggerItem>
+            <StaggerItem><button className="mobile-link w-full" onClick={() => goTo("reportLong")}>2003-2026 + Benchmarks</button></StaggerItem>
+            <StaggerItem><button className="mobile-link w-full" onClick={() => goTo("overview", "#about")}>About</button></StaggerItem>
+            <StaggerItem>
+              <div className="px-3 py-2">
+                <ThemeToggle />
+              </div>
+            </StaggerItem>
+            <StaggerItem>
+              <Button className="mt-2 bg-[#d7b36e] text-zinc-950 hover:bg-[#e6c47f]" onClick={() => goTo("overview", "#contact")}>
+                Request Access
+              </Button>
+            </StaggerItem>
+          </Stagger>
         </div>
-      )}
-    </header>
+      </Collapse>
+    </motion.header>
   );
 }
 
@@ -349,41 +384,46 @@ function Overview({
       <section className="relative overflow-hidden border-b border-border">
         <div className="market-grid" />
         <div className="mx-auto grid min-h-[calc(100vh-64px)] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
-          <div className="relative z-10">
+          <FadeInOnMount className="relative z-10" delay={0.05}>
             <p className="eyebrow">Quantitative FX Trading System</p>
             <h1 className="max-w-3xl text-5xl font-light leading-[1.04] tracking-normal text-foreground sm:text-6xl lg:text-7xl">
               Type-M.
-              <span className="block text-zinc-400">Verified performance across two decades.</span>
+              <span className="block text-muted-foreground">Verified performance across two decades.</span>
             </h1>
             <p className="mt-7 max-w-xl text-base leading-8 text-muted-foreground">
               An institutional-grade automated trading system for EURUSD, backtested over 23 years at 99.9%
               modelling quality with independently reviewable results.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <motion.div
+              className="mt-9 flex flex-wrap gap-3"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...easeOut, delay: 0.35 }}
+            >
               <Button className="h-11 bg-[#d7b36e] px-6 text-zinc-950 hover:bg-[#e6c47f]" onClick={() => goTo("overview", "#contact")}>
                 Request Access <ArrowRight className="size-4" />
               </Button>
               <Button variant="outline" className="h-11 border-border bg-background/40 px-6" onClick={() => goTo("reportLong")}>
                 View Reports
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </FadeInOnMount>
 
-          <div className="relative z-10 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border shadow-2xl">
+          <Stagger onMount className="relative z-10 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border shadow-2xl">
             {heroStats.map(([value, label, color]) => (
-              <div key={label} className="bg-card/95 p-6 sm:p-8">
+              <StaggerItem key={label} className="bg-card/95 p-6 sm:p-8">
                 <p className={cn("text-3xl font-light tracking-normal", color)}>{value}</p>
                 <p className="mt-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
       <section id="typem" className="section">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
+            <FadeIn>
               <p className="eyebrow">The System</p>
               <h2 className="section-title">Type-M</h2>
               <div className="mt-6 flex max-w-2xl flex-col gap-5 text-muted-foreground">
@@ -397,48 +437,53 @@ function Overview({
                   cycle while maintaining a compounding profile.
                 </p>
               </div>
-              <div className="mt-7 flex flex-wrap gap-2">
+              <Stagger className="mt-7 flex flex-wrap gap-2">
                 {["EURUSD", "23-Year Backtest", "99.9% Modelling Quality"].map((tag) => (
-                  <span key={tag} className="rounded-md border border-border bg-secondary px-3 py-2 text-xs text-muted-foreground">
-                    {tag}
-                  </span>
+                  <StaggerItem key={tag}>
+                    <span className="rounded-md border border-border bg-secondary px-3 py-2 text-xs text-muted-foreground">
+                      {tag}
+                    </span>
+                  </StaggerItem>
                 ))}
-              </div>
-            </div>
+              </Stagger>
+            </FadeIn>
 
-            <Card className="rounded-lg border-border bg-card/80">
+            <FadeIn delay={0.1}>
+              <Card className="rounded-lg border-border bg-card/80">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base text-muted-foreground">
                   <BarChart3 className="size-4 text-[#d7b36e]" /> 2020-2026 Backtest Highlights
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2">
+                <Stagger className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2">
                   {shortMetrics.map(([value, label, color]) => (
-                    <div key={label} className="bg-background p-5">
+                    <StaggerItem key={label} className="bg-background p-5">
                       <p className={cn("text-2xl font-light", color)}>{value}</p>
                       <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-                    </div>
+                    </StaggerItem>
                   ))}
-                </div>
+                </Stagger>
               </CardContent>
-            </Card>
+              </Card>
+            </FadeIn>
           </div>
 
-          <div className="mt-12 grid gap-3 md:grid-cols-3">
-            <QuickNav title="2020 - Today Performance" sub="6-year backtest / +185% return" onClick={() => goTo("report2020")} />
-            <QuickNav title="Full Historic Performance" sub="23-year backtest / +2,148% return" onClick={() => goTo("reportLong")} />
-            <QuickNav title="Type-M vs Index Funds" sub="S&P 500 and Dow Jones comparison" onClick={() => goTo("reportLong")} />
-          </div>
+          <Stagger className="mt-12 grid gap-3 md:grid-cols-3">
+            <StaggerItem><QuickNav title="2020 - Today Performance" sub="6-year backtest / +185% return" onClick={() => goTo("report2020")} /></StaggerItem>
+            <StaggerItem><QuickNav title="Full Historic Performance" sub="23-year backtest / +2,148% return" onClick={() => goTo("reportLong")} /></StaggerItem>
+            <StaggerItem><QuickNav title="Type-M vs Index Funds" sub="S&P 500 and Dow Jones comparison" onClick={() => goTo("reportLong")} /></StaggerItem>
+          </Stagger>
         </div>
       </section>
 
       <section className="section bg-secondary/30">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <SectionHead eyebrow="Benchmark Comparison / 2003 - 2026" title="Type-M vs. index funds" sub="$10,000 invested at the start of 2003. S&P 500 total return with dividends reinvested; Dow Jones price return." />
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+          <Stagger className="mt-10 grid gap-4 lg:grid-cols-3">
             {benchmarks.map((item) => (
-              <Card key={item.name} className={cn("rounded-lg border-border bg-card", item.featured && "border-[#d7b36e]/60 bg-[#d7b36e]/8")}>
+              <StaggerItem key={item.name}>
+              <Card className={cn("rounded-lg border-border bg-card", item.featured && "border-[#d7b36e]/60 bg-[#d7b36e]/8")}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-xl">
                     {item.name}
@@ -456,18 +501,29 @@ function Overview({
                   </div>
                 </CardContent>
               </Card>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
       <section id="performance" className="section">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <SectionHead eyebrow="Backtested Results" title="Performance by period" sub="Select a backtest window to review key metrics, equity curves, and report detail." />
+          <FadeIn delay={0.08}>
           <div className="mt-9 flex w-full max-w-md rounded-lg border border-border bg-secondary p-1">
             <button className={tabClass(activePeriod === "report2020")} onClick={() => setActivePeriod("report2020")}>2020-2026</button>
             <button className={tabClass(activePeriod === "reportLong")} onClick={() => setActivePeriod("reportLong")}>2003-2026</button>
           </div>
+          </FadeIn>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activePeriod}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={easeOut}
+            >
           <Card className="mt-5 overflow-hidden rounded-lg border-border bg-card">
             <CardContent className="p-0">
               <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
@@ -486,7 +542,7 @@ function Overview({
                     Full Report <ArrowRight className="size-4" />
                   </Button>
                 </div>
-                <div className="border-t border-border bg-zinc-950/50 p-4 lg:border-l lg:border-t-0">
+                <div className="border-t border-border bg-muted/40 p-4 lg:border-l lg:border-t-0">
                   <p className="mb-3 text-xs uppercase tracking-[0.18em] text-muted-foreground">Balance curve / {panel.capital}</p>
                   <ChartFrame>
                     <BalanceCurveChart kind={activePeriod} compact />
@@ -495,11 +551,14 @@ function Overview({
               </div>
             </CardContent>
           </Card>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </section>
 
       <section id="about" className="section bg-secondary/30">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[0.75fr_1.25fr]">
+          <FadeIn>
           <div>
             <p className="eyebrow">About</p>
             <h2 className="section-title">Built by practitioners, for practitioners.</h2>
@@ -507,30 +566,36 @@ function Overview({
               Work With Us
             </Button>
           </div>
+          </FadeIn>
+          <FadeIn delay={0.1}>
           <div className="flex flex-col gap-6 text-muted-foreground">
             <p>Zenyte Technologies was founded on the premise that institutional-grade investment technology should not be the exclusive domain of the largest banks and hedge funds.</p>
             <p>Our team combines buy-side experience with deep expertise in distributed systems, quantitative research, and high-performance engineering.</p>
-            <div className="grid gap-4 md:grid-cols-3">
+            <Stagger className="grid gap-4 md:grid-cols-3">
               {[
                 ["01", "Research-first", "Every strategy begins with a testable hypothesis and years of validation."],
                 ["02", "Live before launch", "We paper-trade, then live-trade with proprietary capital before deployment."],
                 ["03", "Full transparency", "Clients receive performance attribution, drawdown analysis, and trade logs."],
               ].map(([num, title, copy]) => (
-                <Card key={num} className="rounded-lg border-border bg-card">
+                <StaggerItem key={num}>
+                <Card className="rounded-lg border-border bg-card">
                   <CardContent className="p-5">
                     <p className="text-xs text-[#d7b36e]">{num}</p>
                     <p className="mt-4 font-medium text-foreground">{title}</p>
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">{copy}</p>
                   </CardContent>
                 </Card>
+                </StaggerItem>
               ))}
-            </div>
+            </Stagger>
           </div>
+          </FadeIn>
         </div>
       </section>
 
       <section id="contact" className="section">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <FadeIn>
           <div>
             <p className="eyebrow">Contact</p>
             <h2 className="section-title">Ready to talk?</h2>
@@ -540,16 +605,27 @@ function Overview({
               info@zenytetech.com
             </div>
           </div>
+          </FadeIn>
+          <FadeIn delay={0.12}>
           <Card className="rounded-lg border-border bg-card">
             <CardContent className="p-6 sm:p-8">
-              {sent ? (
+              <PresenceFade show={sent}>
                 <div className="flex min-h-72 flex-col items-center justify-center text-center">
-                  <CheckCircle2 className="size-10 text-[#75c99a]" />
+                  <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={easeOut}>
+                    <CheckCircle2 className="size-10 text-[#75c99a]" />
+                  </motion.div>
                   <p className="mt-4 text-xl text-foreground">Message received.</p>
                   <p className="mt-2 text-sm text-muted-foreground">We will be in touch shortly.</p>
                 </div>
-              ) : (
-                <form className="grid gap-5" onSubmit={(event) => { event.preventDefault(); setSent(true); }}>
+              </PresenceFade>
+              {!sent && (
+                <motion.form
+                  className="grid gap-5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onSubmit={(event) => { event.preventDefault(); setSent(true); }}
+                >
                   <div className="grid gap-5 sm:grid-cols-2">
                     <Field id="fname" label="First Name" required />
                     <Field id="lname" label="Last Name" required />
@@ -563,10 +639,11 @@ function Overview({
                     <Textarea id="message" rows={5} placeholder="Describe your strategy and what you're trying to solve..." className="border-border bg-background" />
                   </div>
                   <Button className="w-fit bg-[#d7b36e] text-zinc-950 hover:bg-[#e6c47f]">Send Message</Button>
-                </form>
+                </motion.form>
               )}
             </CardContent>
           </Card>
+          </FadeIn>
         </div>
       </section>
     </main>
@@ -578,35 +655,40 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
     <main>
       <section className="relative overflow-hidden border-b border-border bg-secondary/20">
         <div className="market-grid opacity-40" />
-        <div className="relative z-10 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-20">
+        <FadeInOnMount className="relative z-10 mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-20">
           <p className="eyebrow">{report.eyebrow}</p>
           <h1 className="text-5xl font-light leading-tight tracking-normal sm:text-6xl">
             {report.title}
-            <span className="block text-zinc-400">{report.subtitle}</span>
+            <span className="block text-muted-foreground">{report.subtitle}</span>
           </h1>
           <p className="mt-5 text-muted-foreground">{report.detail}</p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <motion.div
+            className="mt-8 flex flex-wrap gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...easeOut, delay: 0.3 }}
+          >
             <Button variant="outline" className="border-border bg-background/40" onClick={() => goTo("overview")}>
               <ArrowLeft className="size-4" /> Back to Overview
             </Button>
             <Button className="bg-[#d7b36e] text-zinc-950 hover:bg-[#e6c47f]" onClick={() => goTo(kind === "report2020" ? "reportLong" : "report2020")}>
               {kind === "report2020" ? "View 2003-2026 Report" : "View 2020-2026 Report"} <ArrowRight className="size-4" />
             </Button>
-          </div>
-        </div>
+          </motion.div>
+        </FadeInOnMount>
       </section>
 
       <section className="section">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4 lg:grid-cols-7">
+          <Stagger className="grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4 lg:grid-cols-7">
             {report.stats.map(([value, label, note], index) => (
-              <div key={label} className={cn("bg-card p-5", index === 0 || index === 6 ? "bg-[#d7b36e]/8" : "")}>
+              <StaggerItem key={label} className={cn("bg-card p-5", index === 0 || index === 6 ? "bg-[#d7b36e]/8" : "")}>
                 <p className={cn("text-2xl font-light", index === 0 || index === 6 ? gold : "text-foreground")}>{value}</p>
                 <p className="mt-3 text-xs uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{note}</p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
@@ -614,6 +696,7 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
 
       <section className="section bg-secondary/30">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <FadeIn>
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="eyebrow">Equity Curve</p>
@@ -623,18 +706,22 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
               <span className="size-2 rounded-full bg-[#75c99a]" /> Net balance
             </div>
           </div>
+          </FadeIn>
+          <FadeIn delay={0.1}>
           <ChartFrame className="shadow-2xl">
             <BalanceCurveChart kind={kind} />
           </ChartFrame>
+          </FadeIn>
         </div>
       </section>
 
       <section className="section">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <SectionHead eyebrow="Full Results" title="Strategy metrics" sub="Core report statistics from the MT5 Strategy Tester backtest." />
-          <div className="mt-9 grid gap-4 lg:grid-cols-4">
+          <Stagger className="mt-9 grid gap-4 lg:grid-cols-4">
             {report.groups.map(([title, rows]) => (
-              <Card key={title} className="rounded-lg border-border bg-card">
+              <StaggerItem key={title}>
+              <Card className="rounded-lg border-border bg-card">
                 <CardHeader>
                   <CardTitle className="text-base">{title}</CardTitle>
                 </CardHeader>
@@ -644,8 +731,9 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
                   ))}
                 </CardContent>
               </Card>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
@@ -656,11 +744,13 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
             title="Win / Loss Distribution"
             sub="Trade outcome mix, directional win rates, and quality metrics from the MT5 report."
           />
+          <FadeIn delay={0.1}>
           <Card className="mt-9 overflow-hidden rounded-lg border-border bg-card">
             <CardContent className="p-6 sm:p-8">
               <WinLossBreakdownChart kind={kind} />
             </CardContent>
           </Card>
+          </FadeIn>
         </div>
       </section>
 
@@ -671,11 +761,12 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
             title="Trade distribution charts"
             sub="Hour, weekday, and month activity plus MFE/MAE and holding-time profiles."
           />
-          <div className="mt-9 grid gap-4">
+          <Stagger className="mt-9 grid gap-4">
             {report.otherCharts
               .filter(([, , layout]) => layout === "wide")
               .map(([title, chartKind]) => (
-                <Card key={title} className="overflow-hidden rounded-lg border-border bg-card">
+                <StaggerItem key={title}>
+                <Card className="overflow-hidden rounded-lg border-border bg-card">
                   <CardHeader>
                     <CardTitle className="text-base">{title}</CardTitle>
                   </CardHeader>
@@ -685,12 +776,14 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
                     </ChartFrame>
                   </CardContent>
                 </Card>
+                </StaggerItem>
               ))}
             <div className="grid gap-4 lg:grid-cols-2">
               {report.otherCharts
                 .filter(([, , layout]) => layout === "normal")
                 .map(([title, chartKind]) => (
-                  <Card key={title} className="overflow-hidden rounded-lg border-border bg-card">
+                  <StaggerItem key={title}>
+                  <Card className="overflow-hidden rounded-lg border-border bg-card">
                     <CardHeader>
                       <CardTitle className="text-base">{title}</CardTitle>
                     </CardHeader>
@@ -700,9 +793,10 @@ function ReportView({ report, kind, goTo }: { report: ReportData; kind: Exclude<
                       </ChartFrame>
                     </CardContent>
                   </Card>
+                  </StaggerItem>
                 ))}
             </div>
-          </div>
+          </Stagger>
         </div>
       </section>
     </main>
@@ -714,9 +808,10 @@ function BenchmarkSection() {
     <section className="section bg-secondary/30">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <SectionHead eyebrow="Benchmark Comparison / 2003 - 2026" title="Type-M vs. S&P 500 vs. Dow Jones" sub="Normalized to equal starting capital of $10,000 in 2003." />
-        <div className="mt-9 grid gap-4 lg:grid-cols-3">
+        <Stagger className="mt-9 grid gap-4 lg:grid-cols-3">
           {benchmarks.map((item) => (
-            <Card key={item.name} className={cn("rounded-lg border-border bg-card", item.featured && "border-[#d7b36e]/60")}>
+            <StaggerItem key={item.name}>
+            <Card className={cn("rounded-lg border-border bg-card", item.featured && "border-[#d7b36e]/60")}>
               <CardContent className="p-6">
                 <p className="text-xl font-medium">{item.name}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{item.sub}</p>
@@ -728,8 +823,10 @@ function BenchmarkSection() {
                 </div>
               </CardContent>
             </Card>
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
+        <FadeIn delay={0.12}>
         <Card className="mt-8 overflow-hidden rounded-lg border-border bg-card">
           <CardHeader>
             <CardTitle className="text-base">Growth of $10,000</CardTitle>
@@ -741,6 +838,8 @@ function BenchmarkSection() {
             </ChartFrame>
           </CardContent>
         </Card>
+        </FadeIn>
+        <FadeIn delay={0.16}>
         <div className="mt-8 overflow-hidden rounded-lg border border-border">
           <table className="w-full min-w-[680px] border-collapse bg-card text-sm">
             <thead className="bg-secondary text-left text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -769,6 +868,7 @@ function BenchmarkSection() {
             </tbody>
           </table>
         </div>
+        </FadeIn>
       </div>
     </section>
   );
@@ -776,7 +876,7 @@ function BenchmarkSection() {
 
 function ChartFrame({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-border bg-zinc-950/70 p-3", className)}>
+    <div className={cn("rounded-lg border border-border bg-muted/50 p-3", className)}>
       {children}
     </div>
   );
@@ -829,22 +929,51 @@ function BenchmarkGrowthChart() {
 
 function QuickNav({ title, sub, onClick }: { title: string; sub: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="group rounded-lg border border-border bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-[#d7b36e]/70">
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -2, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
+      whileTap={{ scale: 0.98 }}
+      className="group w-full rounded-lg border border-border bg-card p-5 text-left transition-colors hover:border-[#d7b36e]/70"
+    >
       <span className="flex items-center justify-between gap-4 font-medium">
         {title}
         <ArrowRight className="size-4 text-muted-foreground transition group-hover:text-[#d7b36e]" />
       </span>
       <span className="mt-2 block text-sm text-muted-foreground">{sub}</span>
-    </button>
+    </motion.button>
   );
 }
 
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub: string }) {
   return (
     <div className="max-w-3xl">
-      <p className="eyebrow">{eyebrow}</p>
-      <h2 className="section-title">{title}</h2>
-      <p className="mt-4 text-muted-foreground">{sub}</p>
+      <motion.p
+        className="eyebrow"
+        initial={{ opacity: 0, x: -8 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, margin: "-48px" }}
+        transition={easeOut}
+      >
+        {eyebrow}
+      </motion.p>
+      <motion.h2
+        className="section-title"
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-48px" }}
+        transition={{ ...easeOut, delay: 0.08 }}
+      >
+        {title}
+      </motion.h2>
+      <motion.p
+        className="mt-4 text-muted-foreground"
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-48px" }}
+        transition={{ ...easeOut, delay: 0.16 }}
+      >
+        {sub}
+      </motion.p>
     </div>
   );
 }
@@ -885,7 +1014,8 @@ function tabClass(active: boolean) {
 
 function Footer({ goTo }: { goTo: (view: View, hash?: string) => void }) {
   return (
-    <footer className="border-t border-border bg-zinc-950">
+    <FadeIn>
+    <footer className="border-t border-border bg-muted/30">
       <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
         <div className="flex flex-col justify-between gap-8 md:flex-row">
           <div>
@@ -907,6 +1037,7 @@ function Footer({ goTo }: { goTo: (view: View, hash?: string) => void }) {
         </div>
       </div>
     </footer>
+    </FadeIn>
   );
 }
 

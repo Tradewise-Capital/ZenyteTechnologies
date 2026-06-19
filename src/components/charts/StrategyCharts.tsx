@@ -104,7 +104,7 @@ function HstPanel({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-md border border-border/70 bg-zinc-950/40 p-2", className)}>
+    <div className={cn("rounded-md border border-border/70 bg-muted/40 p-2", className)}>
       <p className="mb-2 px-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{title}</p>
       {children}
     </div>
